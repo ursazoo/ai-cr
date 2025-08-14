@@ -5,15 +5,21 @@ import os from "node:os";
 
 export type ProjectConfig = {
   project?: {
-    name?: string;
-    groupName?: string;       // 人类可读
-    groupId?: string;         // 团队/空间 ID（可选）
-    repoId?: string;          // 知识库 ID（推荐保存这个）
+    name?: string;           // 项目名称，用于生成文档标题
+    groupName?: string;      // 人类可读的项目组名
+    groupId?: string;        // 团队/空间 ID（可选）
+    repoId?: string;         // 知识库 ID（推荐保存这个）
   };
   upload?: {
-    enabled?: boolean;        // 默认 true
-    monthDocPrefix?: string;  // 默认 "CR记录"
+    enabled?: boolean;       // 默认 true
+    monthDocPrefix?: string; // 默认 "CR记录"
+    monthGroupPrefix?: string; // 月度分组前缀，默认 "YYYY-MM"
+    docTitleFormat?: string; // 文档标题格式，默认 "{user}_{project}_{date}"
     appendMode?: "section" | "plain"; // 现在只实现这两种
+    autoCreateGroups?: boolean; // 是否自动创建分组，默认 true
+  };
+  yuque?: {
+    cachedGroupUUIDs?: Record<string, string>; // 缓存分组UUID，避免重复查询
   };
 };
 

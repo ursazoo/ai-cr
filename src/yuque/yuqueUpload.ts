@@ -4,45 +4,123 @@ import dayjs from "dayjs";
 import { getYuqueAuth, loadProjectConfig } from "./config.js";
 import { YuqueClient } from "./yuqueClient.js";
 
-/** 将本次 Markdown 报告上传/追加到“YYYY-MM CR记录”的月度文档（幂等） */
+/** 将本次 Markdown 报告上传到语雀知识库的对应目录结构 */
 export async function uploadReportToYuque(reportPath: string, opts?: { repoId?: string; monthTitle?: string }) {
   const { token, baseURL } = getYuqueAuth();
   const proj = loadProjectConfig();
   const repoId = opts?.repoId ?? proj.project?.repoId;
   if (!repoId) throw new Error("未配置 repoId：请先执行交互绑定，或设置 YUQUE_REPO_ID / ai-cr.config.json");
 
-  const prefix = proj.upload?.monthDocPrefix || "CR记录";
-  const monthTitle = opts?.monthTitle ?? `${dayjs().format("YYYY-MM")} ${prefix}`;
-
   const yuque = new YuqueClient({ token, baseURL });
-
-  // 查找是否已有当月文档
-  const existing = await yuque.findDocByTitle(repoId, monthTitle);
   const content = await fs.readFile(reportPath, "utf8");
 
-  if (!existing) {
-    // 不存在：直接创建
-    await yuque.createDoc(repoId, { title: monthTitle, body: `# ${monthTitle}\n\n${content}\n` });
-    return { created: true, title: monthTitle };
-  }
-
-  // 存在：追加一个分节（以当前时间 + 分支 + commit 短SHA 为小节标题）
-  const now = dayjs().format("YYYY-MM-DD HH:mm");
-  const branch = safeExec("git rev-parse --abbrev-ref HEAD");
-  const shortSha = safeExec("git rev-parse --short HEAD");
-  const sectionTitle = `## ${now} | ${branch} | ${shortSha}`;
-  const appendBlock = `\n${sectionTitle}\n\n${content}\n`;
-
-  const doc = await yuque.getDocRaw(repoId, existing.id);
-  const mergedBody = mergeMarkdown(doc.body || "", appendBlock);
-
-  await yuque.updateDoc(repoId, existing.id, { body: mergedBody });
-  return { created: false, title: monthTitle };
+  // 1. 确保项目组分组存在
+  const projectName = proj.project?.name || "AI-CR项目";
+  const projectGroupUUID = await ensureProjectGroup(yuque, repoId, projectName);
+  
+  // 2. 确保月度分组存在
+  const monthTitle = opts?.monthTitle ?? dayjs().format("YYYY-MM");
+  const monthGroupUUID = await ensureMonthGroup(yuque, repoId, monthTitle, projectGroupUUID);
+  
+  // 3. 生成文档标题和文件名
+  const now = dayjs();
+  const userName = safeExec("git config user.name") || "unknown";
+  const projectNameSlug = proj.project?.name?.replace(/[^a-zA-Z0-9]/g, '_') || "ai_cr";
+  const dateStr = now.format("YYYYMMDD");
+  
+  const docTitle = `${userName}_${projectNameSlug}_${dateStr}`;
+  
+  // 4. 创建文档
+  const docResponse = await yuque.createDoc(repoId, { 
+    title: docTitle,
+    body: content,
+    format: "markdown"
+  });
+  
+  // 5. 将文档添加到月度分组下
+  await yuque.updateToc(repoId, {
+    action: "appendNode",
+    action_mode: "child",
+    target_uuid: monthGroupUUID,
+    type: "DOC",
+    doc_ids: [Number(docResponse.id)]
+  });
+  
+  return { 
+    created: true, 
+    title: docTitle, 
+    docId: docResponse.id,
+    path: `${projectName}/${monthTitle}/${docTitle}`
+  };
 }
 
-function mergeMarkdown(original: string, appendBlock: string) {
-  // 简单合并策略：直接拼到末尾。你也可以在此做“去重/分隔线”等增强。
-  return `${(original || "").trim()}\n\n---\n${appendBlock}`.trim() + "\n";
+// 确保项目组分组存在
+async function ensureProjectGroup(yuque: YuqueClient, repoId: string | number, projectName: string): Promise<string> {
+  const toc = await yuque.getToc(repoId);
+  
+  // 查找是否已存在项目组分组
+  const existingGroup = toc.find(item => 
+    item.type === 'TITLE' && item.title === projectName
+  );
+  
+  if (existingGroup) {
+    return existingGroup.uuid;
+  }
+  
+  // 创建新的项目组分组
+  const newGroupResponse = await yuque.updateToc(repoId, {
+    action: "prependNode",
+    action_mode: "child",
+    type: "TITLE",
+    title: projectName
+  });
+  
+  const newGroup = newGroupResponse.find(item => 
+    item.type === 'TITLE' && item.title === projectName
+  );
+  
+  if (!newGroup) {
+    throw new Error(`创建项目组分组失败: ${projectName}`);
+  }
+  
+  return newGroup.uuid;
+}
+
+// 确保月度分组存在
+async function ensureMonthGroup(yuque: YuqueClient, repoId: string | number, monthTitle: string, parentGroupUUID: string): Promise<string> {
+  const toc = await yuque.getToc(repoId);
+  
+  // 查找是否已存在月度分组（在项目组下）
+  const existingGroup = toc.find(item => 
+    item.type === 'TITLE' && 
+    item.title === monthTitle && 
+    item.parent_uuid === parentGroupUUID
+  );
+  
+  if (existingGroup) {
+    return existingGroup.uuid;
+  }
+  
+  // 创建新的月度分组
+  const newGroupResponse = await yuque.updateToc(repoId, {
+    action: "prependNode",
+    action_mode: "child",
+    target_uuid: parentGroupUUID,
+    type: "TITLE",
+    title: monthTitle
+  });
+  
+  const newGroup = newGroupResponse.find(item => 
+    item.type === 'TITLE' && 
+    item.title === monthTitle && 
+    item.parent_uuid === parentGroupUUID
+  );
+  
+  if (!newGroup) {
+    throw new Error(`创建月度分组失败: ${monthTitle}`);
+  }
+  
+  return newGroup.uuid;
 }
 
 function safeExec(cmd: string): string {

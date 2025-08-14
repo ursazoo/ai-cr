@@ -22,6 +22,33 @@ export interface YuqueDoc {
   slug?: string;
 }
 
+// 新增：目录项接口
+export interface YuqueTocItem {
+  uuid: string;
+  type: 'DOC' | 'LINK' | 'TITLE';
+  title: string;
+  doc_id?: number;
+  level: number;
+  parent_uuid?: string;
+  child_uuid?: string;
+  sibling_uuid?: string;
+  prev_uuid?: string;
+}
+
+// 新增：目录更新载荷接口
+export interface YuqueTocUpdatePayload {
+  action: 'appendNode' | 'prependNode' | 'editNode' | 'removeNode';
+  action_mode: 'sibling' | 'child';
+  target_uuid?: string;
+  node_uuid?: string;
+  type?: 'DOC' | 'LINK' | 'TITLE';
+  title?: string;
+  doc_ids?: number[];
+  url?: string;
+  open_window?: number;
+  visible?: number;
+}
+
 export class YuqueClient {
   private token: string;
   private baseURL: string;
@@ -87,9 +114,13 @@ export class YuqueClient {
     return { title: res.title ?? String(docIdOrSlug), body: res.body ?? "" };
   }
 
-  async createDoc(repoId: string | number, payload: { title: string; body: string }): Promise<YuqueDoc> {
+  async createDoc(repoId: string | number, payload: { title: string; body: string; format?: string }): Promise<YuqueDoc> {
     const url = `${this.baseURL}/api/v2/repos/${repoId}/docs`;
-    const res = await this.request<any>("POST", url, { title: payload.title, format: "markdown", body: payload.body });
+    const res = await this.request<any>("POST", url, { 
+      title: payload.title, 
+      format: payload.format || "markdown", 
+      body: payload.body 
+    });
     return { id: res.id, title: res.title, slug: res.slug };
   }
 
@@ -102,5 +133,17 @@ export class YuqueClient {
   async findDocByTitle(repoId: string | number, title: string): Promise<YuqueDoc | null> {
     const docs = await this.listDocs(repoId);
     return docs.find(d => d.title === title) ?? null;
+  }
+
+  // 新增：获取知识库目录
+  async getToc(repoId: string | number): Promise<YuqueTocItem[]> {
+    const url = `${this.baseURL}/api/v2/repos/${repoId}/toc`;
+    return await this.request<YuqueTocItem[]>("GET", url);
+  }
+
+  // 新增：更新知识库目录
+  async updateToc(repoId: string | number, payload: YuqueTocUpdatePayload): Promise<YuqueTocItem[]> {
+    const url = `${this.baseURL}/api/v2/repos/${repoId}/toc`;
+    return await this.request<YuqueTocItem[]>("PUT", url, payload);
   }
 }

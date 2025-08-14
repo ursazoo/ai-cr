@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run:*)",
+      "Bash(chmod:*)",
+      "Bash(node dist/cli.js --help)",
+      "Bash(npm pack:*)",
+      "Bash(npm run build:*)",
+      "WebFetch(domain:www.yuque.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

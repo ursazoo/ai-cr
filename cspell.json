@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "DASHSCOPE",
+    "qwen",
+    "aliyun",
+    "aliyuncs",
+    "tsx",
+    "aiClient",
+    "GitUtils",
+    "contextExpander",
+    "queueRunner",
+    "rulesEngine"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "*.log"
+  ]
+}

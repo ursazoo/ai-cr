@@ -1,0 +1,45 @@
+{
+  "name": "ai-cr",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cr": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    ".env.example"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "dev:lib": "tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "code-review",
+    "cli",
+    "typescript",
+    "git"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "AI-powered code review tool with CLI interface",
+  "dependencies": {
+    "@types/node": "^24.2.1",
+    "commander": "^14.0.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.2.1",
+    "inquirer": "^12.9.2",
+    "openai": "^5.12.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.33.0",
+    "prettier": "^3.6.2"
+  }
+}

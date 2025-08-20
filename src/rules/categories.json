@@ -1,0 +1,64 @@
+[
+    {
+      "id": "readability",
+      "name": "可读性与可维护性",
+      "description": "函数拆分、意图表达、魔法值、注释质量、组件职责等。",
+      "appliesTo": [".ts", ".js", ".vue", ".wxml", ".axml"],
+      "targets": ["vue2", "vue3", "mp-wechat", "mp-alipay", "taro-vue3"],
+      "aiFocus": [
+        "超长函数/深嵌套应拆分或早返回",
+        "命名体现业务语义，避免 data/a/b 等笼统命名",
+        "消除魔法数字与散落常量，抽到 constants/config",
+        "Vue 组件单一职责，复用逻辑抽到 composables/mixins（Vue2 则 mixins 谨慎）",
+        "小程序页面/组件避免超长 onLoad/onShow/attached"
+      ],
+      "tags": ["可读性"],
+      "enabled": true
+    },
+    {
+      "id": "architecture",
+      "name": "架构与模块边界",
+      "description": "层次边界、依赖方向、复用抽象（composables、服务层）、跨层耦合与循环依赖。",
+      "appliesTo": [".ts", ".js", ".vue"],
+      "targets": ["vue2", "vue3", "taro-vue3"],
+      "aiFocus": [
+        "视图层（components/views）不直接依赖数据访问/平台 API 的私有实现，走 service/useXxx 封装",
+        "跨模块调用通过公共接口，避免从深路径 import 内部实现",
+        "可复用逻辑沉淀为 composables（useXxx.ts）或 utils；Vue2 项目注意 mixins 隐式依赖",
+        "避免循环依赖（互相 import）与跨层穿透"
+      ],
+      "tags": ["架构"],
+      "enabled": true
+    },
+    {
+      "id": "security",
+      "name": "安全",
+      "description": "XSS/注入/敏感信息泄露等语义风险（模板/指令/拼接字符串）。",
+      "appliesTo": [".ts", ".js", ".vue", ".wxml", ".axml"],
+      "targets": ["vue2", "vue3", "mp-wechat", "mp-alipay", "taro-vue3"],
+      "aiFocus": [
+        "慎用 v-html；渲染外部输入需白名单/转义",
+        "模板/拼接字符串中不要直接注入不可信数据",
+        "日志/错误信息避免输出 token/手机号等敏感信息",
+        "小程序 setData 前对外部输入做最小化/过滤"
+      ],
+      "tags": ["安全"],
+      "enabled": true
+    },
+    {
+      "id": "performance",
+      "name": "性能模式",
+      "description": "渲染/响应式/列表/跨端通信的常见性能陷阱与优化模式。",
+      "appliesTo": [".ts", ".js", ".vue", ".wxml", ".axml", ".wxss", ".acss"],
+      "targets": ["vue2", "vue3", "mp-wechat", "mp-alipay", "taro-vue3"],
+      "aiFocus": [
+        "Vue：大列表 v-for 必须带稳定 :key；避免 v-if 和 v-for 同层叠加",
+        "Vue3：computed 与 watch/watchEffect 的清理与依赖正确性；避免不必要的 deep 监听",
+        "频繁 state 更新合并处理；避免在渲染期间创建新的函数/对象导致无谓更新",
+        "小程序：减少高频 setData；只下发必要 diff 字段；长列表使用虚拟列表或分页",
+        "资源懒加载与分包；Taro 按页面/组件拆包，注意图片/字体体积"
+      ],
+      "tags": ["性能"],
+      "enabled": true
+    }
+  ]

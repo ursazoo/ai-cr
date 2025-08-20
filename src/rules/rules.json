@@ -1,0 +1,54 @@
+[
+  {
+    "id": "READ-001",
+    "categoryId": "readability",
+    "title": "长函数/深嵌套应拆分",
+    "description": "超过 ~60 行或嵌套 > 3 层，建议提取子函数或早返回。",
+    "checkBy": "ai",
+    "severity": "major",
+    "enabled": true,
+    "examples": {
+      "good": [
+        "// 将分支提取为独立函数 + 早返回"
+      ],
+      "bad": [
+        "function big() { if(a){ if(b){ if(c){ /* ... */ }}} }"
+      ]
+    }
+  },
+  {
+    "id": "ARCH-002",
+    "categoryId": "architecture",
+    "title": "跨层耦合（UI 直接依赖基础设施私有实现）",
+    "description": "UI 不应 import 未暴露的内部模块，避免层级穿透。",
+    "checkBy": "ai",
+    "severity": "critical",
+    "enabled": true
+  },
+  {
+    "id": "SEC-003",
+    "categoryId": "security",
+    "title": "潜在 XSS 注入",
+    "description": "渲染外部输入时需转义/白名单，避免使用危险 API。",
+    "checkBy": "ai",
+    "severity": "critical",
+    "enabled": true,
+    "examples": {
+      "bad": [
+        "element.innerHTML = userInput"
+      ],
+      "good": [
+        "element.textContent = userInput"
+      ]
+    }
+  },
+  {
+    "id": "PERF-004",
+    "categoryId": "performance",
+    "title": "无效依赖导致重复渲染",
+    "description": "useEffect/useMemo/useCallback 的依赖数组缺失或多余。",
+    "checkBy": "ai",
+    "severity": "major",
+    "enabled": true
+  }
+]

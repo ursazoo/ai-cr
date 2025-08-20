@@ -126,6 +126,13 @@ ${result.aiResults}
   }
 
   /**
+   * 公开的生成Markdown内容方法
+   */
+  public generateMarkdownContent(results: ReviewResult[], mode: string): string {
+    return this.generateMarkdownReport(results, mode);
+  }
+
+  /**
    * 保存审查报告
    */
   public saveReport(results: ReviewResult[], mode: string): string {

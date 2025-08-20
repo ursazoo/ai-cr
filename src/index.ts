@@ -1,6 +1,4 @@
 import { getChangedFilesWithContext } from './utils/contextExpander.js';
-import { ensureProjectGroup } from './yuque/initGroup.js';
-import { uploadReportToYuque } from './yuque/yuqueUpload.js';
 import { runRulesOnFile } from './rules/rulesEngine.js';
 import { aiReviewFile } from './ai/aiClient.js';
 import { runQueue } from './queue/queueRunner.js';
@@ -8,9 +6,8 @@ import { ReportGenerator, type ReviewResult } from './reports/reportGenerator.js
 import { filterFiles, getFileTypeDescription } from './filters/fileFilter.js';
 
 export type ReviewMode = 'static' | 'ai' | 'full';
-export type RunOptions = { upload?: boolean };
 
-export async function run(mode: ReviewMode = 'full', options?: RunOptions): Promise<void> {
+export async function run(mode: ReviewMode = 'full'): Promise<void> {
   console.log(`🚀 启动 AI 代码审查工具 (模式: ${mode})...\n`);
   
   const allFiles = await getChangedFilesWithContext();
@@ -82,17 +79,6 @@ export async function run(mode: ReviewMode = 'full', options?: RunOptions): Prom
   
   console.log(`\n✨ 代码审查完成！`);
   console.log(`📁 报告已保存到: ${reportPath}`);
-
-  // === 新增：语雀上传 ===
-  if (options?.upload !== false) {
-    try {
-      const { repoId } = await ensureProjectGroup(); // 首次会交互；CI 用 YUQUE_REPO_ID 跳过交互
-      const result = await uploadReportToYuque(reportPath, { repoId });
-      console.log(`🧾 语雀上传完成：${result.created ? '新建' : '追加'}《${result.title}》`);
-    } catch (e: any) {
-      console.warn('⚠️ 语雀上传失败：', e?.message || e);
-    }
-  }
   
   // 显示统计摘要
   const ruleIssuesCount = results.reduce((sum, r) => sum + r.ruleResults.length, 0);

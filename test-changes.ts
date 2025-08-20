@@ -5,7 +5,10 @@ export interface TestInterface {
 }
 
 export function testFunction(param: TestInterface): string {
-  console.log('这是一个测试函数'); // TODO: 移除调试日志
+  // 修改：移除了console.log，添加了参数验证
+  if (!param || !param.name) {
+    throw new Error('Invalid parameter');
+  }
   return `Hello, ${param.name}!`;
 }
 

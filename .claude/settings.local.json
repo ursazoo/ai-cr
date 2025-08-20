@@ -8,7 +8,9 @@
       "Bash(node dist/cli.js --help)",
       "Bash(npm pack:*)",
       "Bash(npm run build:*)",
-      "WebFetch(domain:www.yuque.com)"
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

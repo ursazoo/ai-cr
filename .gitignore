@@ -157,3 +157,6 @@ docs/build/
 # Backup files
 *.bak
 *.backup
+
+# AI Code Review Reports
+.ai-cr-reports/

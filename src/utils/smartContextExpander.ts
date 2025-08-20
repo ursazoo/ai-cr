@@ -175,7 +175,7 @@ export class SmartContextExpander {
     
     const output = execSync(gitCommand, { encoding: 'utf-8' });
     return output
-      .split('\\n')
+      .split('\n')
       .filter(Boolean)
       .filter(file => fs.existsSync(file));
   }
@@ -192,15 +192,35 @@ export class SmartContextExpander {
 
     // 获取文件基本信息
     const fileContent = fs.readFileSync(filePath, 'utf-8');
-    const fileSize = fileContent.split('\\n').length;
+    const fileSize = fileContent.split('\n').length;
     const fileType = this.detectFileType(filePath);
 
     // 获取diff信息
     const diffStats = await this.getDiffStats(filePath);
     
-    // 计算变更指标
-    const totalChangedLines = diffStats.additions + diffStats.deletions;
-    const changeRatio = fileSize > 0 ? totalChangedLines / fileSize : 0;
+    // 重新设计变更比例计算逻辑
+    const isNewFile = diffStats.deletions === 0 && diffStats.additions === fileSize;
+    const isDeleted = diffStats.additions === 0 && diffStats.deletions > 0;
+    
+    let actualChangedLines: number;
+    let changeRatio: number;
+    
+    if (isNewFile) {
+      // 新文件：变更行数就是文件大小
+      actualChangedLines = fileSize;
+      changeRatio = 1.0; // 100%变更
+    } else if (isDeleted) {
+      // 删除文件
+      actualChangedLines = diffStats.deletions;
+      changeRatio = 1.0; // 100%删除
+    } else {
+      // 修改文件：变更行数是additions+deletions，但比例要合理计算
+      actualChangedLines = diffStats.additions + diffStats.deletions;
+      // 对于修改文件，基准是原文件大小加上新增行数
+      const baseSize = fileSize + Math.max(0, diffStats.deletions - diffStats.additions);
+      changeRatio = baseSize > 0 ? actualChangedLines / baseSize : 0;
+    }
+    
     const maxChunkSize = diffStats.chunks.length > 0 
       ? Math.max(...diffStats.chunks.map(chunk => chunk.size))
       : 0;
@@ -215,11 +235,11 @@ export class SmartContextExpander {
       changeRatio,
       chunkCount: diffStats.chunks.length,
       maxChunkSize,
-      totalChangedLines,
+      totalChangedLines: actualChangedLines, // 使用实际变更行数
       additions: diffStats.additions,
       deletions: diffStats.deletions,
-      isNewFile: diffStats.deletions === 0 && diffStats.additions === fileSize,
-      isDeleted: diffStats.additions === 0 && fileSize === 0,
+      isNewFile,
+      isDeleted,
       fileType,
       hasApiChanges,
       strategy: ContextStrategy.FULL_FILE, // 临时值，稍后确定
@@ -229,6 +249,18 @@ export class SmartContextExpander {
     // 选择最优策略
     analysis.strategy = this.selectOptimalStrategy(analysis);
     analysis.estimatedTokens = this.estimateTokens(analysis);
+    
+    // Debug信息
+    console.log(`🔍 [${filePath}] 分析结果:`, {
+      fileSize: analysis.fileSize,
+      changeRatio: Math.round(analysis.changeRatio * 100) + '%',
+      chunkCount: analysis.chunkCount,
+      isNewFile: analysis.isNewFile,
+      strategy: analysis.strategy,
+      totalChangedLines: analysis.totalChangedLines,
+      additions: analysis.additions,
+      deletions: analysis.deletions
+    });
 
     // 缓存结果
     if (this.config.enableCaching) {
@@ -253,7 +285,7 @@ export class SmartContextExpander {
       let deletions = 0;
 
       if (numstatOutput) {
-        const parts = numstatOutput.split('\\t');
+        const parts = numstatOutput.split('\t');
         if (parts.length >= 2) {
           additions = parseInt(parts[0] || '0') || 0;
           deletions = parseInt(parts[1] || '0') || 0;
@@ -406,39 +438,49 @@ export class SmartContextExpander {
    * 选择最优的上下文策略
    */
   private selectOptimalStrategy(analysis: ChangeAnalysis): ContextStrategy {
-    // 特殊情况优先处理
-    if (analysis.isNewFile || analysis.fileSize < 50) {
-      return ContextStrategy.FULL_FILE;
-    }
-
+    // 删除的文件：只需要diff
     if (analysis.isDeleted) {
       return ContextStrategy.DIFF_ONLY;
     }
 
-    // 配置文件通常需要完整上下文
-    if (analysis.fileType === FileType.CONFIG && analysis.fileSize < 200) {
+    // 新文件且很小：使用完整文件
+    if (analysis.isNewFile && analysis.fileSize < 100) {
       return ContextStrategy.FULL_FILE;
     }
 
-    // 基于变更比例和复杂度的策略选择
-    if (analysis.changeRatio < 0.05 && analysis.chunkCount <= 2) {
-      return ContextStrategy.DIFF_ONLY;
+    // 新文件但较大：使用智能摘要
+    if (analysis.isNewFile) {
+      return ContextStrategy.SMART_SUMMARY;
     }
 
-    if (analysis.changeRatio < 0.15 && analysis.chunkCount <= 3) {
-      return ContextStrategy.CONTEXT_WINDOW;
-    }
-
-    if (analysis.changeRatio < 0.4 && !analysis.hasApiChanges) {
-      return ContextStrategy.AFFECTED_BLOCKS;
-    }
-
-    if (analysis.changeRatio > 0.6 || analysis.fileSize < 200) {
+    // 非常小的文件（<20行）：直接使用完整文件
+    if (analysis.fileSize < 20) {
       return ContextStrategy.FULL_FILE;
     }
 
-    // 默认使用智能摘要策略
-    return ContextStrategy.SMART_SUMMARY;
+    // 配置文件且较小：使用完整文件
+    if (analysis.fileType === FileType.CONFIG && analysis.fileSize < 50) {
+      return ContextStrategy.FULL_FILE;
+    }
+
+    // 基于变更比例的策略选择（放宽阈值）
+    if (analysis.changeRatio <= 0.1) {
+      // 变更很少（<=10%）：仅diff或上下文窗口
+      return analysis.chunkCount <= 2 ? ContextStrategy.DIFF_ONLY : ContextStrategy.CONTEXT_WINDOW;
+    }
+
+    if (analysis.changeRatio <= 0.3) {
+      // 中等变更（<=30%）：上下文窗口或受影响块
+      return analysis.hasApiChanges ? ContextStrategy.AFFECTED_BLOCKS : ContextStrategy.CONTEXT_WINDOW;
+    }
+
+    if (analysis.changeRatio <= 0.7) {
+      // 较大变更（<=70%）：受影响块或智能摘要  
+      return analysis.fileSize > 100 ? ContextStrategy.SMART_SUMMARY : ContextStrategy.AFFECTED_BLOCKS;
+    }
+
+    // 大变更（>70%）：根据文件大小决定
+    return analysis.fileSize < 150 ? ContextStrategy.FULL_FILE : ContextStrategy.SMART_SUMMARY;
   }
 
   /**
@@ -484,7 +526,7 @@ export class SmartContextExpander {
         break;
     }
 
-    compressedSize = extractedContent.split('\\n').length;
+    compressedSize = extractedContent.split('\n').length;
     const compressionRatio = analysis.fileSize > 0 ? compressedSize / analysis.fileSize : 1;
 
     return {

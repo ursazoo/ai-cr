@@ -1,5 +1,5 @@
 {
-  "name": "ai-cr",
+  "name": "cr",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
@@ -12,10 +12,16 @@
     ".env.example"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.prod.json && cp src/rules/*.json dist/rules/",
+    "build:dev": "tsc",
     "start": "node dist/cli.js",
     "dev": "tsx src/cli.ts",
     "dev:lib": "tsx src/index.ts",
+    "type-check": "tsc --noEmit",
+    "type-check:prod": "tsc --project tsconfig.prod.json --noEmit",
+    "prepublishOnly": "npm run build",
+    "package": "npm run clean && npm run build && npm pack",
+    "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // 开发环境：保持严格类型检查
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    
+    // 开发环境优化
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true
+  }
+}

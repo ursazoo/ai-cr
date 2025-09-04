@@ -1,0 +1,27 @@
+{
+  "project": {
+    "projectGroupId": 2,
+    "projectGroupName": "行业",
+    "projectName": "ai-cr",
+    "name": "ai-cr",
+    "group": "行业",
+    "mainBranch": "main",
+    "developerName": "曹秦锋",
+    "developerUserId": "37"
+  },
+  "ai": {
+    "temperature": 0.1,
+    "maxTokens": 4000
+  },
+  "rules": {
+    "enabled": [
+      "quality",
+      "security",
+      "performance",
+      "maintainability",
+      "bestPractices"
+    ]
+  },
+  "created": "2025-09-04T11:39:32.361Z",
+  "updated": "2025-09-04T11:39:32.361Z"
+}

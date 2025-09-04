@@ -183,7 +183,7 @@ export class SmartContextExpander {
   /**
    * 分析单个文件的变更情况
    */
-  private async analyzeFileChanges(filePath: string): Promise<ChangeAnalysis> {
+  protected async analyzeFileChanges(filePath: string): Promise<ChangeAnalysis> {
     // 检查缓存
     const cacheKey = this.getCacheKey(filePath);
     if (this.config.enableCaching && this.cache.has(cacheKey)) {
@@ -251,16 +251,16 @@ export class SmartContextExpander {
     analysis.estimatedTokens = this.estimateTokens(analysis);
     
     // Debug信息
-    console.log(`🔍 [${filePath}] 分析结果:`, {
-      fileSize: analysis.fileSize,
-      changeRatio: Math.round(analysis.changeRatio * 100) + '%',
-      chunkCount: analysis.chunkCount,
-      isNewFile: analysis.isNewFile,
-      strategy: analysis.strategy,
-      totalChangedLines: analysis.totalChangedLines,
-      additions: analysis.additions,
-      deletions: analysis.deletions
-    });
+    // console.log(`🔍 [${filePath}] 分析结果:`, {
+    //   fileSize: analysis.fileSize,
+    //   changeRatio: Math.round(analysis.changeRatio * 100) + '%',
+    //   chunkCount: analysis.chunkCount,
+    //   isNewFile: analysis.isNewFile,
+    //   strategy: analysis.strategy,
+    //   totalChangedLines: analysis.totalChangedLines,
+    //   additions: analysis.additions,
+    //   deletions: analysis.deletions
+    // });
 
     // 缓存结果
     if (this.config.enableCaching) {
@@ -501,7 +501,7 @@ export class SmartContextExpander {
   /**
    * 提取智能上下文
    */
-  private async extractSmartContext(filePath: string, analysis: ChangeAnalysis): Promise<SmartContext> {
+  protected async extractSmartContext(filePath: string, analysis: ChangeAnalysis): Promise<SmartContext> {
     const content = fs.readFileSync(filePath, 'utf-8');
     
     let extractedContent: string;

@@ -1,14 +1,53 @@
-import { SmartContextExpander } from './utils/smartContextExpander.js';
+import { SmartContextExpander } from './utils/enhancedContextExpander.js';
 import { runRulesOnFile } from './rules/rulesEngine.js';
 import { aiReviewFileWithSmartContext } from './ai/aiClient.js';
 import { runQueue } from './queue/queueRunner.js';
 import { ReportGenerator, type ReviewResult } from './reports/reportGenerator.js';
 import { filterFiles, getFileTypeDescription } from './filters/fileFilter.js';
+import { getApiManager } from './api/index.js';
+import { logger } from './utils/logger.js';
 
 export type ReviewMode = 'static' | 'ai' | 'full';
 
+/**
+ * 上传报告到后端API
+ */
+async function uploadReport(jsonData: any, markdownContent?: string): Promise<void> {
+  try {
+    const apiManager = getApiManager();
+    const projectGroupId = process.env.AI_CR_PROJECT_GROUP_ID;
+    const userId = process.env.AI_CR_USER_ID;
+    const userName = process.env.AI_CR_USER_NAME; // 获取用户名
+    
+    logger.info('📤 正在上传审查报告...');
+    
+    const uploadResponse = await apiManager.report.uploadReport(
+      jsonData, 
+      markdownContent,
+      projectGroupId,
+      userId,
+      userName
+    );
+    
+    if (uploadResponse.reportId) {
+      console.log(`✅ 报告上传成功！报告ID: ${uploadResponse.reportId}`);
+      
+      if (uploadResponse.message) {
+        console.log(`📝 ${uploadResponse.message}`);
+      }
+    } else {
+      console.log('✅ 报告上传完成');
+    }
+    
+  } catch (error) {
+    logger.warn('⚠️  报告上传失败，但不影响本地审查结果:', (error as Error).message);
+    logger.debug('上传错误详情:', error);
+    console.warn(`⚠️  上传失败: ${(error as Error).message}`);
+  }
+}
+
 export async function run(mode: ReviewMode = 'full'): Promise<void> {
-  console.log(`🚀 启动 AI 代码审查工具 (智能模式: ${mode})...\n`);
+  // console.log(`🚀 启动 AI 代码审查工具 (智能模式: ${mode})...\n`);
   
   // 初始化智能上下文扩展器（使用环境变量配置）
   const smartExpander = new SmartContextExpander();
@@ -74,24 +113,40 @@ export async function run(mode: ReviewMode = 'full'): Promise<void> {
   
   await runQueue(files, async (file) => {
     console.log(`\n[${results.length + 1}/${files.length}] 正在审查: ${file.filePath}`);
-    console.log(`    🔍 策略: ${file.context.strategy} | 📊 Token: ${file.context.metadata.estimatedTokens}`);
+    console.log(`    🔍 策略: ${file.context.strategy} | 📊 内容: ${file.context.content.length} 字符`);
     
-    // 静态规则检查（所有模式都执行）
-    // 转换为旧格式以兼容现有规则引擎
-    const legacyFile = { filePath: file.filePath, content: file.context.content };
-    const ruleResults = runRulesOnFile(legacyFile);
-    const ruleStatus = ruleResults.length === 0 ? '✅' : `❌(${ruleResults.length})`;
-    
+    // 执行静态规则检查
+    const ruleViolations = (mode === 'static' || mode === 'full') ? runRulesOnFile(file) : [];
+    const ruleStatus = ruleViolations.length > 0 ? `❌(${ruleViolations.length})` : '✅';
     let aiResults = '';
     let aiStatus = '';
     
     // AI 审查（仅在 ai 或 full 模式下执行）
     if (mode === 'ai' || mode === 'full') {
+      console.log(`    🤖 开始AI审查...`);
+      const startTime = Date.now();
+      
       aiResults = await aiReviewFileWithSmartContext(file);
-      aiStatus = aiResults.includes('模拟AI审查') || aiResults.includes('AI审查失败') ? '⚠️ ' : '✅';
+      
+      const duration = Date.now() - startTime;
+      const durationStr = duration > 1000 ? `${(duration/1000).toFixed(1)}s` : `${duration}ms`;
+      
+      if (aiResults.includes('💾 *此结果来自缓存*')) {
+        aiStatus = '💾';
+        console.log(`    💾 使用缓存结果 (${durationStr})`);
+      } else if (aiResults.includes('模拟AI审查')) {
+        aiStatus = '🤖';
+        console.log(`    🤖 模拟审查完成 (${durationStr})`);
+      } else if (aiResults.includes('AI审查失败')) {
+        aiStatus = '⚠️';
+        console.log(`    ⚠️ AI审查失败 (${durationStr})`);
+      } else {
+        aiStatus = '✅';
+        console.log(`    ✅ AI审查完成 (${durationStr})`);
+      }
     } else {
       aiResults = 'static 模式下跳过 AI 审查';
-      aiStatus = '⏭️ ';
+      aiStatus = '⏭️';
     }
     
     // 显示简洁的结果摘要
@@ -100,20 +155,27 @@ export async function run(mode: ReviewMode = 'full'): Promise<void> {
     // 收集结果用于报告生成
     results.push({
       filePath: file.filePath,
-      ruleResults,
+      ruleResults: ruleViolations.map(v => v.title),
+      ruleViolations,
       aiResults
     });
   });
   
   // 生成并保存报告
-  const reportPath = reportGenerator.saveReport(results, mode);
+  const reportData = reportGenerator.saveReport(results, mode);
+  
+  // 上传报告到后端
+  await uploadReport(reportData.jsonData, reportData.markdownContent);
   
   console.log(`\n✨ 代码审查完成！`);
-  console.log(`📁 报告已保存到: ${reportPath}`);
+  console.log(`📁 报告目录: .ai-cr-reports/`);
   
   // 显示统计摘要
   const ruleIssuesCount = results.reduce((sum, r) => sum + r.ruleResults.length, 0);
   console.log(`📊 统计: ${results.length} 个文件，${ruleIssuesCount} 个规则问题`);
+  
+  // 确保进程正常退出
+  process.exit(0);
 }
 
 // 直接运行时的默认行为

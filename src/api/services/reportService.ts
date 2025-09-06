@@ -29,6 +29,20 @@ export class ReportService {
     userId?: string,
     userName?: string
   ): Promise<ReportUploadResponse> {
+    console.log('============ reportService.uploadReport 参数检查 ============');
+    console.log('reportData 类型:', typeof reportData);
+    console.log('reportData 是否为空:', reportData == null);
+    console.log('reportData 内容概要:');
+    if (reportData) {
+      console.log('  - projectInfo:', reportData.projectInfo);
+      console.log('  - files 数量:', reportData.files?.length || 0);
+      console.log('  - statistics:', reportData.statistics);
+    } else {
+      console.log('  - reportData 为空或 undefined');
+    }
+    console.log('markdownContent 长度:', markdownContent?.length || 0);
+    console.log('======================================================');
+    
     // 获取当前分支名
     let branchName = 'main';
     try {
@@ -43,16 +57,17 @@ export class ReportService {
     
     // 构造符合后端API期望的数据格式
     const uploadRequest = {
-      projectId: parseInt(projectGroupId || reportData.projectInfo.projectGroupId || '1'), // 转为数字
+      projectId: parseInt(projectGroupId || '1'), // 转为数字
       userName: realUserName, // 使用真实用户名
       branchName: branchName, // 分支名
-      reviewContent: markdownContent || '代码审查报告' // 完整的Markdown内容
+      reviewContent: markdownContent || '代码审查报告', // 完整的Markdown内容
+      metadata: reportData // 包含完整的JSON审查数据
     };
 
     // 添加详细的请求参数日志
     console.log('============ 请求参数详情 ============');
     console.log('projectGroupId 参数:', projectGroupId);
-    console.log('reportData.projectInfo.projectGroupId:', reportData.projectInfo.projectGroupId);
+    console.log('projectGroupId 来源于环境变量或参数:', projectGroupId || '1');
     console.log('userName 参数:', userName);
     console.log('reportData.projectInfo.developerName:', reportData.projectInfo.developerName);
     console.log('markdownContent 长度:', markdownContent?.length || 0);

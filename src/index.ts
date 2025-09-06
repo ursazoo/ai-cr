@@ -14,6 +14,14 @@ export type ReviewMode = 'static' | 'ai' | 'full';
  */
 async function uploadReport(jsonData: any, markdownContent?: string): Promise<void> {
   try {
+    console.log('开始执行 uploadReport 函数');
+    console.log('============ uploadReport 函数参数详情 ============');
+    console.log('jsonData 类型:', typeof jsonData);
+    console.log('jsonData 是否为空:', jsonData == null);
+    console.log('jsonData 内容:', jsonData ? JSON.stringify(jsonData, null, 2) : 'null/undefined');
+    console.log('markdownContent 长度:', markdownContent?.length || 0);
+    console.log('===============================================');
+    
     const apiManager = getApiManager();
     const projectGroupId = process.env.AI_CR_PROJECT_GROUP_ID;
     const userId = process.env.AI_CR_USER_ID;
@@ -29,19 +37,14 @@ async function uploadReport(jsonData: any, markdownContent?: string): Promise<vo
       userName
     );
     
-    if (uploadResponse.reportId) {
-      console.log(`✅ 报告上传成功！报告ID: ${uploadResponse.reportId}`);
-      
-      // 上传代码审查详情数据
-      try {
-        logger.info('📊 正在上传代码审查详情...');
-        const detailResult = await apiManager.report.uploadCodeReviewDetails(uploadResponse.reportId, jsonData);
-        console.log(`✅ 代码审查详情上传成功 (${detailResult.totalIssues} 个问题)`);
-      } catch (detailError) {
-        logger.warn('⚠️  代码审查详情上传失败，但不影响报告上传:', (detailError as Error).message);
-        logger.debug('详情上传错误详情:', detailError);
-        console.warn(`⚠️  详情上传失败: ${(detailError as Error).message}`);
-      }
+    // 添加调试信息
+    console.log('uploadResponse 结构:', JSON.stringify(uploadResponse, null, 2));
+    console.log('uploadResponse.id:', uploadResponse.id);
+    console.log('uploadResponse.id 类型:', typeof uploadResponse.id);
+    
+    if (uploadResponse.id) {
+      console.log(`✅ 报告上传成功！报告ID: ${uploadResponse.id}`);
+      console.log(`📊 审查数据已包含在报告中，无需额外上传详情`);
     } else {
       console.log('✅ 报告上传完成');
     }
@@ -170,8 +173,26 @@ export async function run(mode: ReviewMode = 'full'): Promise<void> {
   // 生成并保存报告
   const reportData = reportGenerator.saveReport(results, mode);
   
+  console.log('============ saveReport 结果检查 ============');
+  console.log('reportData 类型:', typeof reportData);
+  console.log('reportData.jsonData 类型:', typeof reportData.jsonData);
+  console.log('reportData.jsonData 是否为空:', reportData.jsonData == null);
+  console.log('reportData.markdownContent 长度:', reportData.markdownContent?.length || 0);
+  if (reportData.jsonData) {
+    console.log('reportData.jsonData.projectInfo:', reportData.jsonData.projectInfo);
+    console.log('reportData.jsonData.files 长度:', reportData.jsonData.files?.length || 0);
+  }
+  console.log('==========================================');
+  
+  console.log('准备调用 uploadReport 函数');
   // 上传报告到后端
-  await uploadReport(reportData.jsonData, reportData.markdownContent);
+  try {
+    await uploadReport(reportData.jsonData, reportData.markdownContent);
+    console.log('uploadReport 函数调用完成');
+  } catch (error) {
+    console.error('uploadReport 函数调用失败:', error);
+    // 不抛出异常，避免影响主流程
+  }
   
   console.log(`\n✨ 代码审查完成！`);
   console.log(`📁 报告目录: .ai-cr-reports/`);

@@ -26,6 +26,7 @@ interface RuleViolation {
   line?: number;
   column?: number;
   context?: string;
+  codeSnippet?: string;
 }
 
 export class RulesEngine {
@@ -122,7 +123,7 @@ export class RulesEngine {
           description: rule.description,
           severity: rule.severity,
           line: index + 1,
-          context: line.trim()
+          codeSnippet: line.trim()
         });
       }
       
@@ -135,7 +136,7 @@ export class RulesEngine {
           description: rule.description,
           severity: rule.severity,
           line: index + 1,
-          context: line.trim()
+          codeSnippet: line.trim()
         });
       }
     });
@@ -156,7 +157,7 @@ export class RulesEngine {
           description: rule.description,
           severity: rule.severity,
           line: index + 1,
-          context: line.trim()
+          codeSnippet: line.trim()
         });
       }
     });
@@ -181,7 +182,7 @@ export class RulesEngine {
             description: rule.description,
             severity: rule.severity,
             line: index + 1,
-            context: line.trim()
+            codeSnippet: line.trim()
           });
         }
       });
@@ -208,7 +209,7 @@ export class RulesEngine {
             description: rule.description,
             severity: rule.severity,
             line: index + 1,
-            context: line.trim()
+            codeSnippet: line.trim()
           });
         }
       });
@@ -235,7 +236,7 @@ export class RulesEngine {
             description: rule.description,
             severity: rule.severity,
             line: index + 1,
-            context: line.trim()
+            codeSnippet: line.trim()
           });
         }
       });
@@ -256,7 +257,7 @@ export class RulesEngine {
           description: rule.description,
           severity: rule.severity,
           line: index + 1,
-          context: line.trim()
+          codeSnippet: line.trim()
         });
       }
     });
@@ -276,7 +277,7 @@ export class RulesEngine {
           description: rule.description,
           severity: rule.severity,
           line: index + 1,
-          context: line.trim()
+          codeSnippet: line.trim()
         });
       }
     });
@@ -303,7 +304,7 @@ export class RulesEngine {
             description: rule.description,
             severity: rule.severity,
             line: index + 1,
-            context: line.trim()
+            codeSnippet: line.trim()
           });
         }
       });
@@ -326,7 +327,7 @@ export class RulesEngine {
             description: rule.description,
             severity: rule.severity,
             line: index + 1,
-            context: line.trim()
+            codeSnippet: line.trim()
           });
         }
       });

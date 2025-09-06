@@ -30,18 +30,14 @@ export interface ReviewResult {
   aiResults: string;
 }
 
+export interface CleanProjectInfo {
+  projectGroupName: string;
+  projectName: string;
+  developerName: string;
+}
+
 export interface JsonReportData {
-  metadata: {
-    generatedAt: string;
-    reviewMode: string;
-    toolVersion: string;
-    totalFiles: number;
-    totalIssues: number;
-    filesWithIssues: number;
-    aiProcessed: number;
-    cacheHits: number;
-  };
-  projectInfo: ProjectInfo;
+  projectInfo: CleanProjectInfo;
   statistics: {
     severityDistribution: {
       critical: number;
@@ -257,17 +253,13 @@ export class ReportGenerator {
 
 | 项目信息 | 详情 |
 |----------|------|
-| 项目组ID | ${projectInfo.projectGroupId} |
 | 项目组名称 | ${projectInfo.projectGroupName} |
 | 项目名称 | ${projectInfo.projectName} |
 | 开发者姓名 | ${projectInfo.developerName} |
-| 开发者ID | ${projectInfo.developerUserId} |
 
 ---
 
 **生成时间**: ${timestamp}  
-**审查模式**: ${mode}  
-**工具版本**: cr v1.0.0  
 
 ## 📊 统计概览
 
@@ -346,38 +338,14 @@ export class ReportGenerator {
       markdown += '---\n\n';
     });
 
-    markdown += `## 📊 总结
-
-- **总文件数**: ${totalFiles}
-- **规则问题**: ${ruleIssues}
-- **审查完成时间**: ${timestamp}
-
-> 📁 报告保存位置: \`${this.reportsDir}\`  
-> 🔧 工具版本: ai-cr v1.0.0
-`;
-
     return markdown;
   }
 
   /**
    * 生成JSON格式的报告数据
    */
-  private generateJsonReport(results: ReviewResult[], mode: string): JsonReportData {
-    const timestamp = new Date().toISOString();
-    const totalFiles = results.length;
+  private generateJsonReport(results: ReviewResult[]): JsonReportData {
     const projectInfo = this.getProjectInfo();
-    
-    // 统计规则违反情况
-    const ruleIssues = results.reduce((sum, r) => {
-      return sum + (r.ruleViolations?.length || r.ruleResults.length);
-    }, 0);
-    
-    const filesWithIssues = results.filter(r => 
-      (r.ruleViolations?.length || 0) > 0 || r.ruleResults.length > 0
-    ).length;
-    
-    const aiProcessed = results.filter(r => r.aiResults && !r.aiResults.includes('static 模式下跳过')).length;
-    const cached = results.filter(r => r.aiResults && r.aiResults.includes('此结果来自缓存')).length;
     
     const severityStats = this.calculateSeverityStats(results);
     const categoryStats = this.calculateCategoryStats(results);
@@ -400,17 +368,21 @@ export class ReportGenerator {
       .sort((a, b) => b.count - a.count);
 
     return {
-      metadata: {
-        generatedAt: timestamp,
-        reviewMode: mode,
-        toolVersion: 'cr v1.0.0',
-        totalFiles,
-        totalIssues: ruleIssues,
-        filesWithIssues,
-        aiProcessed,
-        cacheHits: cached
+      // metadata: {
+      //   generatedAt: timestamp,
+      //   reviewMode: mode,
+      //   toolVersion: 'cr v1.0.0',
+      //   totalFiles,
+      //   totalIssues: ruleIssues,
+      //   filesWithIssues,
+      //   aiProcessed,
+      //   cacheHits: cached
+      // },
+      projectInfo: {
+        projectGroupName: projectInfo.projectGroupName,
+        projectName: projectInfo.projectName,
+        developerName: projectInfo.developerName
       },
-      projectInfo,
       statistics: {
         severityDistribution: severityStats,
         categoryDistribution: categoryStats
@@ -438,8 +410,8 @@ export class ReportGenerator {
   /**
    * 公开的生成JSON内容方法
    */
-  public generateJsonContent(results: ReviewResult[], mode: string): JsonReportData {
-    return this.generateJsonReport(results, mode);
+  public generateJsonContent(results: ReviewResult[]): JsonReportData {
+    return this.generateJsonReport(results);
   }
 
   /**
@@ -536,7 +508,7 @@ export class ReportGenerator {
     
     // 生成内容
     const markdownContent = this.generateMarkdownReport(results, mode);
-    const jsonData = this.generateJsonReport(results, mode);
+    const jsonData = this.generateJsonReport(results);
 
     // 保存文件
     fs.writeFileSync(markdownPath, markdownContent, 'utf-8');
@@ -569,7 +541,7 @@ export class ReportGenerator {
   /**
    * 仅保存JSON报告
    */
-  public saveJsonReport(results: ReviewResult[], mode: string): { 
+  public saveJsonReport(results: ReviewResult[]): { 
     jsonPath: string; 
     jsonData: JsonReportData;
   } {
@@ -577,7 +549,7 @@ export class ReportGenerator {
     const nameWithoutExt = baseFileName.replace('.md', '');
     const jsonPath = path.join(this.reportsDir, `${nameWithoutExt}.json`);
     
-    const jsonData = this.generateJsonReport(results, mode);
+    const jsonData = this.generateJsonReport(results);
     fs.writeFileSync(jsonPath, JSON.stringify(jsonData, null, 2), 'utf-8');
     
     return {

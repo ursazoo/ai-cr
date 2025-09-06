@@ -110,9 +110,20 @@ export interface ReportUploadRequest {
 }
 
 export interface ReportUploadResponse {
-  reportId: string;
-  status: string;
-  message?: string;
+  id: number;
+  documentGroupId: number;
+  projectId: number;
+  documentName: string;
+  documentType: number;
+  documentAuthorId: number;
+  documentAuthorName: string;
+  documentLink: string;
+  documentImgUrl: string;
+  createUserId: number;
+  createTime: string;
+  updateTime: string;
+  previewNum: number;
+  delFlag: number;
 }
 
 export interface UploadCodeReviewDetailsRequest {

@@ -46,14 +46,18 @@
       "Read(/Users/rabbitsbear/project/fshows/iteration-mcp/src/**)",
       "Read(/Users/rabbitsbear/project/fshows/iteration-mcp/src/**)",
       "mcp__filesystem__edit_file",
-      "Read(/Users/rabbitsbear/project/fshows/**)"
+      "Read(/Users/rabbitsbear/project/fshows/**)",
+      "Bash(npm run type-check:*)",
+      "mcp__filesystem__search_files",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
       "/Users/rabbitsbear/project/fshows/fs-codeOrder-web-project",
       "/Users/rabbitsbear/project/fshows/great-wall-admin-backend-project",
-      "/Users/rabbitsbear/.ai-cr"
+      "/Users/rabbitsbear/.ai-cr",
+      "/Users/rabbitsbear/project"
     ]
   }
 }

@@ -3,6 +3,7 @@
 ## 概述
 
 ai-cr工具现在完全集成了后端API，实现以下功能：
+
 - **自动上传**审查报告到后端服务（默认启用）
 - **智能获取**项目组列表和用户信息
 - **自动配置**必要的项目组ID和用户ID
@@ -60,11 +61,13 @@ npx cr --mode full --verbose --api-url http://localhost:36788
 **接口**: `POST /api/common/getProjectList`
 
 **请求体**:
+
 ```json
 {}
 ```
 
 **响应**:
+
 ```json
 {
   "code": 200,
@@ -84,6 +87,7 @@ npx cr --mode full --verbose --api-url http://localhost:36788
 **接口**: `POST /common/getUserList`
 
 **请求体**:
+
 ```json
 {
   "realName": "张三"
@@ -91,6 +95,7 @@ npx cr --mode full --verbose --api-url http://localhost:36788
 ```
 
 **响应**:
+
 ```json
 {
   "code": 200,
@@ -111,6 +116,7 @@ npx cr --mode full --verbose --api-url http://localhost:36788
 **接口**: `POST /document/createCodeReviewDocument`
 
 **请求体**:
+
 ```json
 {
   "projectGroupId": "group_001",
@@ -132,6 +138,7 @@ npx cr --mode full --verbose --api-url http://localhost:36788
 ```
 
 **响应**:
+
 ```json
 {
   "code": 200,
@@ -189,6 +196,7 @@ npx cr --verbose
 ```
 
 日志包含：
+
 - 必要信息检查过程
 - API请求/响应详情
 - 错误信息和解决建议
@@ -212,6 +220,7 @@ npx cr --api-url http://localhost:36788
 ## 配置文件结构
 
 ### 全局配置 (`~/.ai-cr/config.json`)
+
 ```json
 {
   "apiKey": "your-dashscope-api-key",
@@ -230,6 +239,7 @@ npx cr --api-url http://localhost:36788
 ```
 
 ### 项目配置 (`.ai-cr.config.json`)
+
 ```json
 {
   "project": {

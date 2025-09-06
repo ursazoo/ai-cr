@@ -27,7 +27,8 @@ export const API_ENDPOINTS = {
 
   // 文档相关
   DOCUMENT: {
-    CREATE_CODE_REVIEW: '/document/createCodeReviewDocument'
+    CREATE_CODE_REVIEW: '/document/createCodeReviewDocument',
+    UPLOAD_CODE_REVIEW_DETAILS: '/document/uploadCodeReviewDetails'
   },
 
   // 报告相关

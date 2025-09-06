@@ -115,6 +115,17 @@ export interface ReportUploadResponse {
   message?: string;
 }
 
+export interface UploadCodeReviewDetailsRequest {
+  documentId: number;
+  reviewData: any; // JsonReportData 结构
+}
+
+export interface UploadCodeReviewDetailsResponse {
+  documentId: number;
+  totalIssues: number;
+  message: string;
+}
+
 export interface ReportListResponse extends PaginatedResponse<ReviewReport> {}
 
 export interface ReportDetailResponse {

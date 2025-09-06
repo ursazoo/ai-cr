@@ -57,7 +57,7 @@ export class ApiClient {
 
     //  || this.config.baseUrl
     // 'http://localhost:36788'
-    const baseUrl = 'http://localhost:36788';
+    const baseUrl = 'http://localhost:36788/api';
     const prodUrl = 'http://gw.fshows.com/api';
     const url = `${baseUrl && prodUrl}${endpoint}`;
     
@@ -94,7 +94,7 @@ export class ApiClient {
       fetchOptions.body = bodyContent;
       
       // 添加请求体日志
-      console.log('请求体内容:', bodyContent);
+      // console.log('请求体内容:', bodyContent);
     }
 
     // 执行请求（带重试机制）

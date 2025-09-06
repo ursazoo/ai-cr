@@ -32,13 +32,19 @@ async function uploadReport(jsonData: any, markdownContent?: string): Promise<vo
     if (uploadResponse.reportId) {
       console.log(`✅ 报告上传成功！报告ID: ${uploadResponse.reportId}`);
       
-      if (uploadResponse.message) {
-        console.log(`📝 ${uploadResponse.message}`);
+      // 上传代码审查详情数据
+      try {
+        logger.info('📊 正在上传代码审查详情...');
+        const detailResult = await apiManager.report.uploadCodeReviewDetails(uploadResponse.reportId, jsonData);
+        console.log(`✅ 代码审查详情上传成功 (${detailResult.totalIssues} 个问题)`);
+      } catch (detailError) {
+        logger.warn('⚠️  代码审查详情上传失败，但不影响报告上传:', (detailError as Error).message);
+        logger.debug('详情上传错误详情:', detailError);
+        console.warn(`⚠️  详情上传失败: ${(detailError as Error).message}`);
       }
     } else {
       console.log('✅ 报告上传完成');
     }
-    
   } catch (error) {
     logger.warn('⚠️  报告上传失败，但不影响本地审查结果:', (error as Error).message);
     logger.debug('上传错误详情:', error);

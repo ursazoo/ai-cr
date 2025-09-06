@@ -10,7 +10,9 @@ import type {
   ReportUploadResponse,
   ReportListResponse,
   ReportDetailResponse,
-  ReportListParams
+  ReportListParams,
+  UploadCodeReviewDetailsRequest,
+  UploadCodeReviewDetailsResponse
 } from '../../types/api.js';
 import type { JsonReportData } from '../../reports/reportGenerator.js';
 
@@ -133,5 +135,29 @@ export class ReportService {
       console.warn('删除报告失败:', (error as Error).message);
       return false;
     }
+  }
+
+  /**
+   * 上传代码审查详情到文档
+   */
+  async uploadCodeReviewDetails(
+    documentId: string, 
+    reviewData: JsonReportData
+  ): Promise<UploadCodeReviewDetailsResponse> {
+    const uploadRequest: UploadCodeReviewDetailsRequest = {
+      documentId: parseInt(documentId),
+      reviewData
+    };
+
+    const response = await this.apiClient.post<UploadCodeReviewDetailsResponse>(
+      API_ENDPOINTS.DOCUMENT.UPLOAD_CODE_REVIEW_DETAILS,
+      uploadRequest
+    );
+
+    if (!response.data) {
+      throw new Error('上传代码审查详情失败：服务器未返回有效响应');
+    }
+
+    return response.data;
   }
 }

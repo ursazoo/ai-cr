@@ -45,7 +45,8 @@
       "Read(/Users/rabbitsbear/project/fshows/iteration-mcp/src/**)",
       "Read(/Users/rabbitsbear/project/fshows/iteration-mcp/src/**)",
       "Read(/Users/rabbitsbear/project/fshows/iteration-mcp/src/**)",
-      "mcp__filesystem__edit_file"
+      "mcp__filesystem__edit_file",
+      "Read(/Users/rabbitsbear/project/fshows/**)"
     ],
     "deny": [],
     "ask": [],

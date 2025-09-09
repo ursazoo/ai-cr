@@ -87,6 +87,7 @@ export interface RuleViolation {
   title: string;
   description: string;
   severity: 'critical' | 'major' | 'minor' | 'info';
+  filePath?: string;
   line?: number;
   column?: number;
   codeSnippet?: string;

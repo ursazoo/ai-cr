@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { homedir } from 'os';
+import { CodeFormatter } from '../utils/codeFormatter.js';
 
 export interface ProjectInfo {
   projectGroupId: string;
@@ -17,6 +18,7 @@ export interface RuleViolation {
   title: string;
   description: string;
   severity: 'critical' | 'major' | 'minor' | 'info';
+  filePath?: string;
   line?: number;
   column?: number;
   codeSnippet?: string;
@@ -309,10 +311,18 @@ export class ReportGenerator {
             markdown += `**[${violation.categoryId}-${violation.ruleId}] ${violation.title}**\n`;
             markdown += `- **描述**: ${violation.description}\n`;
             if (violation.line) {
-              markdown += `- **位置**: 第 ${violation.line} 行${violation.column ? `, 第 ${violation.column} 列` : ''}\n`;
+              const fileDisplay = violation.filePath ? `文件: ${violation.filePath}, ` : '';
+              markdown += `- **位置**: ${fileDisplay}第 ${violation.line} 行${violation.column ? `, 第 ${violation.column} 列` : ''}\n`;
             }
             if (violation.codeSnippet) {
-              markdown += `- **代码片段**:\n  \`\`\`\n  ${violation.codeSnippet}\n  \`\`\`\n`;
+              const formatResult = CodeFormatter.format(violation.codeSnippet, violation.filePath);
+              const formattedCode = CodeFormatter.toMarkdown(formatResult);
+              
+              if (formatResult.isInline) {
+                markdown += `- **代码片段**: ${formattedCode}\n`;
+              } else {
+                markdown += `- **代码片段**:\n  ${formattedCode}\n`;
+              }
             }
             if (violation.suggestion) {
               markdown += `- **建议**: ${violation.suggestion}\n`;

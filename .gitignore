@@ -160,3 +160,7 @@ docs/build/
 
 # AI Code Review Reports
 .ai-cr-reports/
+.ai-cr-cache
+
+# Development environment config
+.claude/

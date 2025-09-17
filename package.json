@@ -1,9 +1,10 @@
 {
-  "name": "ai-cr",
+  "name": "@asthestarslept/ai-cr",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
+    "ai-code-review": "dist/cli.js",
     "ai-cr": "dist/cli.js",
     "cr": "dist/cli.js"
   },

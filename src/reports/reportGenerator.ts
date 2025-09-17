@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { homedir } from 'os';
 import { CodeFormatter } from '../utils/codeFormatter.js';
+import { MarkdownBuilder } from '../utils/markdownBuilder.js';
 
 export interface ProjectInfo {
   projectGroupId: string;
@@ -232,123 +233,196 @@ export class ReportGenerator {
     const timestamp = new Date().toLocaleString('zh-CN');
     const totalFiles = results.length;
     const projectInfo = this.getProjectInfo();
-    
+
     // 统计规则违反情况
     const ruleIssues = results.reduce((sum, r) => {
       return sum + (r.ruleViolations?.length || r.ruleResults.length);
     }, 0);
-    
-    const filesWithIssues = results.filter(r => 
+
+    const filesWithIssues = results.filter(r =>
       (r.ruleViolations?.length || 0) > 0 || r.ruleResults.length > 0
     ).length;
-    
+
     const aiProcessed = results.filter(r => r.aiResults && !r.aiResults.includes('static 模式下跳过')).length;
     const cached = results.filter(r => r.aiResults && r.aiResults.includes('此结果来自缓存')).length;
-    
+
     // 按严重程度统计
     const severityStats = this.calculateSeverityStats(results);
     const categoryStats = this.calculateCategoryStats(results);
-    
-    let markdown = `# AI 代码审查报告
 
-## 📋 项目信息
+    // 使用 MarkdownBuilder 构建报告
+    const builder = MarkdownBuilder.create();
 
-| 项目信息 | 详情 |
-|----------|------|
-| 项目组名称 | ${projectInfo.projectGroupName} |
-| 项目名称 | ${projectInfo.projectName} |
-| 开发者姓名 | ${projectInfo.developerName} |
+    // 标题和项目信息
+    builder
+      .addHeading('AI 代码审查报告', 1)
+      .addSection()
+      .addHeading('📋 项目信息', 2)
+      .addSection()
+      .addTable(
+        [
+          { key: 'info', header: '项目信息' },
+          { key: 'detail', header: '详情' }
+        ],
+        [
+          { info: '项目组名称', detail: projectInfo.projectGroupName },
+          { info: '项目名称', detail: projectInfo.projectName },
+          { info: '开发者姓名', detail: projectInfo.developerName }
+        ]
+      )
+      .addHorizontalRule()
+      .addKeyValue('生成时间', timestamp)
+      .addSection()
+      .addHeading('📊 统计概览', 2)
+      .addSection();
 
----
+    // 基础统计表格
+    builder
+      .addHeading('基础统计', 3)
+      .addTable(
+        [
+          { key: 'metric', header: '指标' },
+          { key: 'value', header: '数值' }
+        ],
+        [
+          { metric: '检查文件', value: totalFiles },
+          { metric: '规则问题', value: ruleIssues },
+          { metric: '问题文件', value: filesWithIssues },
+          { metric: 'AI处理', value: aiProcessed },
+          { metric: '缓存命中', value: cached }
+        ]
+      );
 
-**生成时间**: ${timestamp}  
+    // 严重程度分布表格
+    builder
+      .addHeading('问题严重程度分布', 3)
+      .addTable(
+        [
+          { key: 'level', header: '级别' },
+          { key: 'count', header: '数量' },
+          { key: 'icon', header: '图标' }
+        ],
+        [
+          { level: '严重 (Critical)', count: severityStats.critical, icon: '🚨' },
+          { level: '重要 (Major)', count: severityStats.major, icon: '⚠️' },
+          { level: '一般 (Minor)', count: severityStats.minor, icon: '💡' },
+          { level: '提示 (Info)', count: severityStats.info, icon: 'ℹ️' }
+        ]
+      );
 
-## 📊 统计概览
+    // 问题分类分布表格
+    const categoryRows = Object.entries(categoryStats).map(([categoryId, count]) => ({
+      categoryId,
+      categoryName: this.getCategoryName(categoryId),
+      count
+    }));
 
-### 基础统计
-| 指标 | 数值 |
-|------|------|
-| 检查文件 | ${totalFiles} |
-| 规则问题 | ${ruleIssues} |
-| 问题文件 | ${filesWithIssues} |
-| AI处理 | ${aiProcessed} |
-| 缓存命中 | ${cached} |
+    builder
+      .addHeading('问题分类分布', 3)
+      .addTable(
+        [
+          { key: 'categoryId', header: '分类ID' },
+          { key: 'categoryName', header: '分类名称' },
+          { key: 'count', header: '数量' }
+        ],
+        categoryRows
+      )
+      .addHorizontalRule();
 
-### 问题严重程度分布
-| 级别 | 数量 | 图标 |
-|------|------|------|
-| 严重 (Critical) | ${severityStats.critical} | 🚨 |
-| 重要 (Major) | ${severityStats.major} | ⚠️ |
-| 一般 (Minor) | ${severityStats.minor} | 💡 |
-| 提示 (Info) | ${severityStats.info} | ℹ️ |
-
-### 问题分类分布
-| 分类ID | 分类名称 | 数量 |
-|--------|----------|------|${Object.entries(categoryStats).map(([categoryId, count]) => 
-`| ${categoryId} | ${this.getCategoryName(categoryId)} | ${count} |`).join('\n')}
-
----
-
-`;
-
+    // 遍历每个文件的结果
     results.forEach((result, index) => {
-      markdown += `## ${index + 1}. ${result.filePath}\n\n`;
-      
+      builder.addHeading(`${index + 1}. ${result.filePath}`, 3);
+
       // 显示规则违反详情
       if (result.ruleViolations && result.ruleViolations.length > 0) {
-        markdown += `### 📋 规则检查 (${result.ruleViolations.length} 个问题)\n\n`;
-        
+        builder.addHeading(`📋 规则检查 (${result.ruleViolations.length} 个问题)`, 4);
+
         // 按严重程度分组
         const groupedByCategory = this.groupViolationsByCategory(result.ruleViolations);
-        
+
         for (const [categoryId, violations] of Object.entries(groupedByCategory)) {
           const categoryName = this.getCategoryName(categoryId);
           const severityIcon = this.getSeverityIcon(violations[0]?.severity || 'info');
-          
-          markdown += `#### ${severityIcon} ${categoryName}\n\n`;
-          
+
+          builder.addHeading(`${severityIcon} ${categoryName}`, 5);
+
           violations.forEach(violation => {
-            markdown += `**[${violation.categoryId}-${violation.ruleId}] ${violation.title}**\n`;
-            markdown += `- **描述**: ${violation.description}\n`;
+            builder
+              .addRaw(`**[${violation.categoryId}-${violation.ruleId}] ${violation.title}**\n`)
+              .addListItem('描述', violation.description);
+
             if (violation.line) {
               const fileDisplay = violation.filePath ? `文件: ${violation.filePath}, ` : '';
-              markdown += `- **位置**: ${fileDisplay}第 ${violation.line} 行${violation.column ? `, 第 ${violation.column} 列` : ''}\n`;
+              const location = `${fileDisplay}第 ${violation.line} 行${violation.column ? `, 第 ${violation.column} 列` : ''}`;
+              builder.addListItem('位置', location);
             }
+
             if (violation.codeSnippet) {
               const formatResult = CodeFormatter.format(violation.codeSnippet, violation.filePath);
               const formattedCode = CodeFormatter.toMarkdown(formatResult);
-              
+
               if (formatResult.isInline) {
-                markdown += `- **代码片段**: ${formattedCode}\n`;
+                builder.addRaw(`- **代码片段**: ${formattedCode}\n`);
               } else {
-                markdown += `- **代码片段**:\n  ${formattedCode}\n`;
+                builder.addRaw(`- **代码片段**:\n${formattedCode}\n`);
               }
             }
+
             if (violation.suggestion) {
-              markdown += `- **建议**: ${violation.suggestion}\n`;
+              builder.addListItem('建议', violation.suggestion);
             }
-            markdown += '\n';
+
+            builder.addLineBreak();
           });
         }
       } else if (result.ruleResults.length === 0) {
-        markdown += '### 📋 规则检查\n✅ 规则检查通过\n\n';
+        builder
+          .addHeading('📋 规则检查', 4)
+          .addParagraph('✅ 规则检查通过');
       } else {
         // 兼容旧格式
-        markdown += `### 📋 规则检查 (${result.ruleResults.length} 个问题)\n\n`;
-        result.ruleResults.forEach(issue => {
-          markdown += `❌ ${issue}\n`;
-        });
-        markdown += '\n';
+        builder.addHeading(`📋 规则检查 (${result.ruleResults.length} 个问题)`, 4);
+        const issueList = result.ruleResults.map(issue => `❌ ${issue}`);
+        builder.addList(issueList);
       }
 
+      // AI 审查结果
       if (mode === 'ai' || mode === 'full') {
-        markdown += `### 🤖 AI 审查\n\n${result.aiResults}\n\n`;
+        // 记录原始AI返回内容用于调试
+        if (process.env.AI_CR_DEBUG === 'true') {
+          console.log(`🐛 原始AI内容 (${result.filePath}):`, result.aiResults);
+        }
+
+        builder
+          .addHeading('🤖 AI 审查', 4)
+          .addSection();
+
+        // 检查AI结果是否为空或包含错误信息
+        if (!result.aiResults || result.aiResults.trim() === '') {
+          builder.addParagraph('⚠️ AI 审查结果为空');
+        } else if (result.aiResults.includes('static 模式下跳过') ||
+                   result.aiResults.includes('API Key 未配置')) {
+          builder.addParagraph(result.aiResults);
+        } else {
+          // 进行格式化处理
+          builder.addAIContent(result.aiResults, 5);
+
+          // 如果启用调试模式，记录处理后的内容
+          if (process.env.AI_CR_DEBUG === 'true') {
+            // 优化内存使用，避免创建不必要的字符串副本
+            const currentLength = builder.getLength();
+            const debugContent = currentLength > 500 ?
+              '...' + builder.build().substring(currentLength - 500) :
+              builder.build();
+            console.log(`🐛 处理后内容 (${result.filePath}):`, debugContent);
+          }
+        }
       }
 
-      markdown += '---\n\n';
+      builder.addHorizontalRule();
     });
 
-    return markdown;
+    return builder.build();
   }
 
   /**

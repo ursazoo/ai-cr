@@ -245,11 +245,14 @@ export class CodeFormatter {
   
   /**
    * 生成Markdown代码片段
+   * 返回纯 Markdown 字符串，供 MarkdownBuilder 使用
    */
   public static toMarkdown(formatResult: FormatResult): string {
     if (formatResult.isInline) {
+      // 内联代码格式
       return `\`${formatResult.content}\``;
     } else {
+      // 代码块格式
       const language = formatResult.language || '';
       return `\`\`\`${language}\n${formatResult.content}\n\`\`\``;
     }

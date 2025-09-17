@@ -4,9 +4,8 @@
 
 import { ApiClient } from '../apiClient.js';
 import { API_ENDPOINTS } from '../endpoints.js';
-import type { 
+import type {
   ReviewReport,
-  ReportUploadRequest,
   ReportUploadResponse,
   ReportListResponse,
   ReportDetailResponse,
@@ -23,10 +22,10 @@ export class ReportService {
    * 上传审查报告
    */
   async uploadReport(
-    reportData: JsonReportData, 
+    reportData: JsonReportData,
     markdownContent?: string,
     projectGroupId?: string,
-    userId?: string,
+    _userId?: string,
     userName?: string
   ): Promise<ReportUploadResponse> {
     console.log('============ reportService.uploadReport 参数检查 ============');

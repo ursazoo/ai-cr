@@ -191,7 +191,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkNamingConventions(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkNamingConventions(rule: Rule, _content: string, lines: string[], filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const fileType = path.extname(filePath).toLowerCase();
     
@@ -233,7 +233,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkMagicNumbers(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkMagicNumbers(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     
     lines.forEach((line, index) => {
@@ -245,7 +245,7 @@ export class RulesEngine {
           title: rule.title,
           description: rule.description,
           severity: rule.severity,
-          filePath: filePath,
+          filePath: _filePath,
           line: index + 1,
           codeSnippet: line.trim()
         });
@@ -255,7 +255,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkHardcodedSecrets(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkHardcodedSecrets(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const secretPatterns = [
       /['"](?:password|pwd|secret|key|token|api_key)['"]\s*[:=]\s*['"][^'"]+['"]/gi,
@@ -281,7 +281,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkSensitiveLogging(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkSensitiveLogging(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const sensitivePatterns = [
       /console\.log.*(?:phone|mobile|idcard|password|token|secret)/gi,
@@ -308,7 +308,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkXSSRisk(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkXSSRisk(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const xssPatterns = [
       /v-html\s*=\s*[^"']*(?:user|input|data|param)/gi,
@@ -335,7 +335,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkVueListKeys(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkVueListKeys(rule: Rule, _content: string, lines: string[], filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const fileType = path.extname(filePath).toLowerCase();
     
@@ -362,7 +362,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkVueDirectiveConflict(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkVueDirectiveConflict(rule: Rule, _content: string, lines: string[], filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const fileType = path.extname(filePath).toLowerCase();
     
@@ -389,7 +389,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private checkDirectDOMManipulation(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private checkDirectDOMManipulation(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     const domPatterns = [
       /document\.(?:getElementById|querySelector|querySelectorAll)/gi,
@@ -417,7 +417,7 @@ export class RulesEngine {
     return violations;
   }
   
-  private basicKeywordCheck(rule: Rule, content: string, lines: string[], filePath: string): RuleViolation[] {
+  private basicKeywordCheck(rule: Rule, _content: string, lines: string[], _filePath: string): RuleViolation[] {
     const violations: RuleViolation[] = [];
     
     // 通用console.log检测 (如果没有专门的SEC-002规则)

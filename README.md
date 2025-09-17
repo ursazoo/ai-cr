@@ -44,16 +44,58 @@
 
 ## 🚀 快速开始
 
-### 安装依赖
+### 安装
 
+#### 全局安装（推荐）
 ```bash
-npm install
+npm install -g @asthestarslept/ai-cr
+```
+
+#### 使用 npx（无需安装）
+```bash
+npx @asthestarslept/ai-cr
+```
+
+#### 项目级安装
+```bash
+npm install --save-dev @asthestarslept/ai-cr
 ```
 
 ### 基本使用
 
+#### 命令行使用
+
+```bash
+# 基础使用（可使用任意命令别名）
+ai-cr
+# 或
+ai-code-review
+# 或
+cr
+
+# 启用并行处理 (4个Worker)
+ai-cr --parallel 4
+
+# 禁用缓存
+ai-cr --no-cache
+
+# 显示详细统计
+ai-cr --stats --verbose
+
+# 仅AI审查模式
+ai-cr --mode ai
+
+# 使用自定义配置
+ai-cr --config ./ai-cr.config.json
+
+# 组合使用
+ai-cr --mode full --parallel 8 --stats --verbose
+```
+
+#### 编程接口
+
 ```typescript
-import { AICRSystem } from './src/aiCRSystem';
+import { AICRSystem } from '@asthestarslept/ai-cr';
 
 // 创建系统实例
 const aiCR = new AICRSystem();
@@ -68,31 +110,6 @@ const result = await aiCR.reviewCode({
 });
 
 console.log(`发现 ${result.metadata.totalIssues} 个问题`);
-```
-
-### 命令行使用
-
-```bash
-# 基础使用
-npm run cr
-
-# 启用并行处理 (4个Worker)
-npm run cr -- --parallel 4
-
-# 禁用缓存
-npm run cr -- --no-cache
-
-# 显示详细统计
-npm run cr -- --stats --verbose
-
-# 仅AI审查模式
-npm run cr -- --mode ai
-
-# 使用自定义配置
-npm run cr -- --config ./ai-cr.config.json
-
-# 组合使用
-npm run cr -- --mode full --parallel 8 --stats --verbose
 ```
 
 ## 📋 配置说明
@@ -262,7 +279,7 @@ jobs:
         run: npm install
       
       - name: Run AI Code Review
-        run: npm run ai-cr -- --base-branch origin/main --output review.md
+        run: npx @asthestarslept/ai-cr --base-branch origin/main --output review.md
         env:
           AI_CR_AI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       
@@ -319,7 +336,7 @@ export AI_CR_ENABLE_CACHE=true
 
 ```bash
 # 检查API配置
-npm run ai-cr -- --health-check
+ai-cr --health-check
 
 # 查看详细日志
 export AI_CR_LOG_LEVEL=debug
@@ -332,10 +349,10 @@ export AI_CR_LOG_LEVEL=debug
 tail -f logs/ai-cr.log
 
 # 分析性能指标
-npm run ai-cr -- --stats
+ai-cr --stats
 
 # 导出缓存统计
-npm run ai-cr -- --cache-stats
+ai-cr --cache-stats
 ```
 
 ## 🤝 贡献指南
@@ -364,6 +381,10 @@ npm run example
 
 # 构建项目
 npm run build
+
+# 本地测试
+npm link
+ai-cr --help
 ```
 
 ## 📄 许可证
@@ -378,7 +399,16 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 - TypeScript
 - Node.js Worker Threads
 
+## 📦 NPM 包信息
+
+- **包名**: [@asthestarslept/ai-cr](https://www.npmjs.com/package/@asthestarslept/ai-cr)
+- **版本**: 1.0.0
+- **许可证**: MIT
+- **主页**: https://github.com/your-username/ai-cr
+
 ---
 
 **🚀 让AI助力代码质量提升，让开发更高效！**
+
+安装使用：`npm install -g @asthestarslept/ai-cr`
 

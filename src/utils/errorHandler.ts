@@ -181,7 +181,7 @@ export class RobustErrorHandler {
   private errorLog: AICRError[] = [];
   private retryAttempts: Map<string, number> = new Map();
   private recoveryCounts: Map<string, number> = new Map();
-  private _startTime = Date.now();
+  private _startTime = Date.now(); // 暂未使用，预留用于性能监控
 
   constructor(config: Partial<RecoveryConfig> = {}) {
     this.config = { ...DEFAULT_RECOVERY_CONFIG, ...config };
@@ -472,7 +472,7 @@ export class RobustErrorHandler {
       strategy: FallbackStrategy.RETRY,
       priority: 70,
       condition: (error) => error.type === ErrorType.NETWORK_ERROR,
-      handler: async (error, context) => {
+      handler: async (error, _context) => {
         // 等待网络恢复
         await this.sleep(5000);
         throw error; // 触发重试
@@ -484,7 +484,7 @@ export class RobustErrorHandler {
       strategy: FallbackStrategy.SKIP,
       priority: 60,
       condition: (error) => error.type === ErrorType.FILE_ACCESS_ERROR,
-      handler: async (error, context) => {
+      handler: async (_error, context) => {
         console.log(`⏭️ 跳过无法访问的文件: ${context.filePath}`);
         return null; // 跳过该文件
       }
@@ -495,7 +495,7 @@ export class RobustErrorHandler {
       strategy: FallbackStrategy.SIMPLIFY,
       priority: 75,
       condition: (error) => error.type === ErrorType.GIT_ERROR,
-      handler: async (error, context) => {
+      handler: async (_error, context) => {
         // 回退到本地文件读取模式
         console.log('🔄 Git操作失败，回退到本地文件模式');
         return this.fallbackToLocalFileMode(context);

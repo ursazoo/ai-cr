@@ -198,7 +198,7 @@ export class InitManager {
         type: 'input',
         name: 'model',
         message: '请输入模型名称:',
-        default: 'qwen-plus'
+        default: 'qwen3-coder-plus'
       },
     ]);
 
@@ -313,7 +313,7 @@ export class InitManager {
 
       // 发送一个简单的测试请求，使用用户配置的模型
       await openai.chat.completions.create({
-        model: model || 'qwen-plus',
+        model: model || 'qwen3-coder-plus',
         messages: [{ role: 'user', content: 'Hello' }],
         max_tokens: 5
       });

@@ -5,7 +5,6 @@ import { run, type ReviewMode } from './index.js';
 import { config } from 'dotenv';
 import { initManager } from './utils/initManager.js';
 import { configIntegrator } from './utils/configIntegrator.js';
-import { initApiManager } from './api/index.js';
 import { logger } from './utils/logger.js';
 
 // 加载环境变量

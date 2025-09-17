@@ -1,15 +1,17 @@
 {
-  "name": "cr",
+  "name": "ai-cr",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
+    "ai-cr": "dist/cli.js",
     "cr": "dist/cli.js"
   },
   "files": [
     "dist",
     "README.md",
-    ".env.example"
+    ".env.example",
+    "docs/"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.prod.json && cp src/rules/*.json dist/rules/",
@@ -29,11 +31,28 @@
     "code-review",
     "cli",
     "typescript",
-    "git"
+    "git",
+    "static-analysis",
+    "code-quality",
+    "automation",
+    "developer-tools",
+    "qwen",
+    "dashscope"
   ],
-  "author": "",
-  "license": "ISC",
-  "description": "AI-powered code review tool with CLI interface",
+  "author": "AI-CR Team",
+  "license": "MIT",
+  "description": "AI-powered code review tool with intelligent analysis and automated reporting",
+  "homepage": "https://github.com/your-username/ai-cr#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/ai-cr.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/ai-cr/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.2.1",
